@@ -20,6 +20,17 @@
  * SOFTWARE.
  */
 
+#include "server/server.h"
+
+#include <boost/asio.hpp>
+
 int main() {
+  std::unique_ptr<skylog_server::server::IServer> server(
+      new skylog_server::server::Server(
+          boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 6666)));
+
+  server->Listen();
+  server->service().run();
+
   return 0;
 }

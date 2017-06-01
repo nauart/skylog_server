@@ -30,6 +30,7 @@ include_directories(include)
 set(SOURCES
   src/main.cc
   src/connection/connection.cc
+  src/server/server.cc
 )
 
 set(LIBRARIES
