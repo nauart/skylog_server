@@ -22,41 +22,37 @@
 
 #pragma once
 
-#include "connection/iconnection.h"
+#include "server/iserver.h"
 
-#include <cstdint>
-#include <vector>
+#include <memory>
 
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
-#include <boost/enable_shared_from_this.hpp>
+
+#include "connection/iconnection.h"
 
 namespace skylog_server {
-namespace connection {
+namespace server {
 
-class Connection : public IConnection,
-                   public boost::enable_shared_from_this<Connection> {
+class Server : public IServer {
  public:
-  Connection();
-  ~Connection();
+  explicit Server(const boost::asio::ip::tcp::endpoint& endpoint);
+  ~Server();
 
-  Connection(Connection&&) = default;
-  Connection& operator=(Connection&&) = default;
+  Server(Server&&) = default;
+  Server& operator=(Server&&) = default;
 
-  void Read() final;
+  void Listen() final;
 
-  boost::asio::ip::tcp::socket& socket() final;
+  boost::asio::io_service& service() final;
 
  private:
-  void Handle(const boost::system::error_code& error,
-              const std::size_t bytes_transferred);
+  void Accept(const std::shared_ptr<connection::IConnection>& connection,
+              const boost::system::error_code& error);
 
   boost::asio::io_service service_;
-  std::unique_ptr<boost::thread> thread_;
 
-  boost::asio::ip::tcp::socket socket_;
-  std::vector<std::uint8_t> buffer_;
+  boost::asio::ip::tcp::acceptor acceptor_;
 };
 
-}  // namespace connection
+}  // namespace server
 }  // namespace skylog_server

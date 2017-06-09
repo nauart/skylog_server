@@ -22,41 +22,19 @@
 
 #pragma once
 
-#include "connection/iconnection.h"
-
-#include <cstdint>
-#include <vector>
-
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 namespace skylog_server {
-namespace connection {
+namespace server {
 
-class Connection : public IConnection,
-                   public boost::enable_shared_from_this<Connection> {
+class IServer {
  public:
-  Connection();
-  ~Connection();
+  virtual ~IServer() {}
 
-  Connection(Connection&&) = default;
-  Connection& operator=(Connection&&) = default;
+  virtual void Listen() = 0;
 
-  void Read() final;
-
-  boost::asio::ip::tcp::socket& socket() final;
-
- private:
-  void Handle(const boost::system::error_code& error,
-              const std::size_t bytes_transferred);
-
-  boost::asio::io_service service_;
-  std::unique_ptr<boost::thread> thread_;
-
-  boost::asio::ip::tcp::socket socket_;
-  std::vector<std::uint8_t> buffer_;
+  virtual boost::asio::io_service& service() = 0;
 };
 
-}  // namespace connection
+}  // namespace server
 }  // namespace skylog_server
