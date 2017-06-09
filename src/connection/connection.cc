@@ -23,7 +23,6 @@
 #include "connection/connection.h"
 
 #include <cstdint>
-#include <atomic>
 #include <vector>
 #include <iostream>
 
@@ -40,11 +39,12 @@ skylog_server::connection::Connection::Connection()
     , thread_(new boost::thread(
           boost::bind(&boost::asio::io_service::run, &service_)))
     , socket_(service_)
-    , is_running_(true)
     , buffer_() {}
 
 skylog_server::connection::Connection::~Connection() {
-  Stop();
+  if (thread_) {
+    thread_->join();
+  }
 
   boost::system::error_code error;
   socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_receive, error);
@@ -57,19 +57,17 @@ skylog_server::connection::Connection::~Connection() {
 }
 
 void skylog_server::connection::Connection::Read() {
-  if (is_running_) {
-    const std::size_t old_size = buffer_.size();
-    const std::size_t new_size = old_size + kChunkSize;
+  const std::size_t old_size = buffer_.size();
+  const std::size_t new_size = old_size + kChunkSize;
 
-    buffer_.resize(new_size);
-    boost::asio::async_read(
-        socket_,
-        boost::asio::buffer(&buffer_[old_size], kChunkSize),
-        boost::bind(&Connection::Handle,
-                    shared_from_this(),
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred));
-  }
+  buffer_.resize(new_size);
+  boost::asio::async_read(
+      socket_,
+      boost::asio::buffer(&buffer_[old_size], kChunkSize),
+      boost::bind(&Connection::Handle,
+                  shared_from_this(),
+                  boost::asio::placeholders::error,
+                  boost::asio::placeholders::bytes_transferred));
 }
 
 boost::asio::ip::tcp::socket& skylog_server::connection::Connection::socket() {
@@ -84,14 +82,5 @@ void skylog_server::connection::Connection::Handle(
 
   if (!error) {
     Read();
-  }
-}
-
-void skylog_server::connection::Connection::Stop() {
-  bool expected_value = true;
-  if (is_running_.compare_exchange_strong(expected_value, false)) {
-    if (thread_) {
-      thread_->join();
-    }
   }
 }

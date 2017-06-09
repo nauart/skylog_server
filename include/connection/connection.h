@@ -25,7 +25,6 @@
 #include "connection/iconnection.h"
 
 #include <cstdint>
-#include <atomic>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -52,14 +51,10 @@ class Connection : public IConnection,
   void Handle(const boost::system::error_code& error,
               const std::size_t bytes_transferred);
 
-  void Stop();
-
   boost::asio::io_service service_;
   std::unique_ptr<boost::thread> thread_;
 
   boost::asio::ip::tcp::socket socket_;
-  std::atomic_bool is_running_;
-
   std::vector<std::uint8_t> buffer_;
 };
 
